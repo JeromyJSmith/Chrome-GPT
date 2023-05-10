@@ -57,7 +57,7 @@ class SeleniumWrapper:
 
     def google_search(self, query: str) -> str:
         safe_string = urllib.parse.quote_plus(query)
-        url = "https://www.google.com/search?q=" + safe_string
+        url = f"https://www.google.com/search?q={safe_string}"
         # Go to website
         try:
             self.driver.switch_to.window(self.driver.window_handles[-1])
@@ -119,18 +119,11 @@ class SeleniumWrapper:
         if main_content:
             output += f"{main_content}\n"
 
-        # Extract interactable components (buttons and links)
-        interactable_content = self._get_interactable_elements()
-        if interactable_content:
+        if interactable_content := self._get_interactable_elements():
             output += f"{interactable_content}\n"
 
-        # Extract form inputs
-        form_fields = self._find_form_fields()
-        if form_fields:
-            output += (
-                "You can input text in these fields using fill_form function: "
-                + form_fields
-            )
+        if form_fields := self._find_form_fields():
+            output += f"You can input text in these fields using fill_form function: {form_fields}"
         return output
 
     def click_button_by_text(self, button_text: str) -> str:
@@ -207,12 +200,11 @@ class SeleniumWrapper:
 
     def find_form_inputs(self, url: Optional[str] = None) -> str:
         """Find form inputs on the website."""
-        fields = self._find_form_fields(url)
-        if fields:
-            form_inputs = "Available Form Input Fields: " + fields
-        else:
-            form_inputs = "No form inputs found on current page. Try another website."
-        return form_inputs
+        return (
+            f"Available Form Input Fields: {fields}"
+            if (fields := self._find_form_fields(url))
+            else "No form inputs found on current page. Try another website."
+        )
 
     def _find_form_fields(self, url: Optional[str] = None) -> str:
         """Find form fields on the website."""
@@ -261,12 +253,11 @@ class SeleniumWrapper:
             form_input = kwargs  # type: ignore
         try:
             for element in self.driver.find_elements(By.XPATH, "//textarea | //input"):
-                label_txt = (
+                if label_txt := (
                     element.get_attribute("name")
                     or element.get_attribute("aria-label")
                     or find_parent_element_text(element)
-                )
-                if label_txt:
+                ):
                     label_txt = prettify_text(label_txt)
                     for key in form_input.keys():  # type: ignore
                         if prettify_text(key) == label_txt:
@@ -277,7 +268,7 @@ class SeleniumWrapper:
                             time.sleep(0.5)  # Allow some time for the page to settle
                             try:
                                 # Try clearing the input field
-                                element.send_keys(Keys.CONTROL + "a")
+                                element.send_keys(f"{Keys.CONTROL}a")
                                 element.send_keys(Keys.DELETE)
                                 element.clear()
                             except WebDriverException:

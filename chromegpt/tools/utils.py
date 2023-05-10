@@ -20,14 +20,13 @@ def get_all_text_elements(driver: WebDriver) -> List[str]:
         " self::noscript)][string-length(normalize-space(text())) > 0]"
     )
     elements = driver.find_elements(By.XPATH, xpath)
-    texts = [
+    return [
         element.text.strip()
         for element in elements
         if element.text.strip()
         and element.is_displayed()
         and element_completely_viewable(driver, element)
     ]
-    return texts
 
 
 def find_interactable_elements(driver: WebDriver) -> List[str]:
@@ -88,20 +87,12 @@ def element_completely_viewable(driver: WebDriver, elem: WebElement) -> bool:
 
 def find_parent_element_text(elem: WebElement, prettify: bool = True) -> str:
     """Find the text up to third order parent element."""
-    parent_element_text = elem.text.strip()
-    if parent_element_text:
-        return (
-            parent_element_text if not prettify else prettify_text(parent_element_text)
-        )
+    if parent_element_text := elem.text.strip():
+        return prettify_text(parent_element_text) if prettify else parent_element_text
     elements = elem.find_elements(By.XPATH, "./ancestor::*[position() <= 3]")
     for parent_element in elements:
-        parent_element_text = parent_element.text.strip()
-        if parent_element_text:
-            return (
-                parent_element_text
-                if not prettify
-                else prettify_text(parent_element_text)
-            )
+        if parent_element_text := parent_element.text.strip():
+            return prettify_text(parent_element_text) if prettify else parent_element_text
     return ""
 
 
@@ -109,7 +100,6 @@ def truncate_string_from_last_occurrence(string: str, character: str) -> str:
     """Truncate a string from the last occurrence of a character."""
     last_occurrence_index = string.rfind(character)
     if last_occurrence_index != -1:
-        truncated_string = string[: last_occurrence_index + 1]
-        return truncated_string
+        return string[: last_occurrence_index + 1]
     else:
         return string
