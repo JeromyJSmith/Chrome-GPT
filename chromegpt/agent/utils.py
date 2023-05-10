@@ -87,5 +87,4 @@ def get_vectorstore() -> FAISS:
 
     embedding_size = 1536
     index = faiss.IndexFlatL2(embedding_size)
-    vectorstore = FAISS(embeddings_model.embed_query, index, InMemoryDocstore({}), {})
-    return vectorstore
+    return FAISS(embeddings_model.embed_query, index, InMemoryDocstore({}), {})

@@ -18,10 +18,12 @@ from chromegpt.agent.utils import get_agent_tools, get_vectorstore
 def get_zeroshot_agent(llm: ChatOpenAI, verbose: bool = False) -> AgentExecutor:
     """Get the zero shot agent. Optimized for GPT-3.5 use."""
     tools = get_agent_tools()
-    agent = initialize_agent(
-        tools, llm, agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=verbose
+    return initialize_agent(
+        tools,
+        llm,
+        agent=AgentType.CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=verbose,
     )
-    return agent
 
 
 def _get_full_inputs(
@@ -36,8 +38,7 @@ def _get_full_inputs(
         intermediate_steps[-4:]
     )  # limit to 4 intermediate steps for GPT-3.5
     new_inputs = {"agent_scratchpad": thoughts, "stop": self._stop}
-    full_inputs = {**kwargs, **new_inputs}
-    return full_inputs
+    return kwargs | new_inputs
 
 
 class ZeroShotAgent(ChromeGPTAgent):
@@ -91,14 +92,13 @@ class BabyAGIAgent(ChromeGPTAgent):
         tools.append(self._get_todo_tool())
         agent = self._get_zero_shot_agent(llm=llm, verbose=verbose, tools=tools)
         vectorstore = get_vectorstore()
-        baby_agi = BabyAGI.from_llm(
+        return BabyAGI.from_llm(
             llm=llm,
             vectorstore=vectorstore,  # type: ignore
             task_execution_chain=agent,
             verbose=verbose,
             max_iterations=max_iterations,  # type: ignore
         )
-        return baby_agi
 
     def _get_zero_shot_agent(
         self, llm: ChatOpenAI, verbose: bool, tools: List[BaseTool]
@@ -119,10 +119,9 @@ class BabyAGIAgent(ChromeGPTAgent):
         llm_chain = LLMChain(llm=llm, prompt=prompt)
         tool_names = [tool.name for tool in tools]
         agent = LangChainZeroShotAgent(llm_chain=llm_chain, allowed_tools=tool_names)
-        agent_executor = AgentExecutor.from_agent_and_tools(
+        return AgentExecutor.from_agent_and_tools(
             agent=agent, tools=tools, verbose=True, max_iterations=4
         )
-        return agent_executor
 
     def run(self, tasks: List[str]) -> str:
         return str(self.babyagi({"objective": " ".join(tasks)}))

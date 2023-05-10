@@ -39,7 +39,7 @@ class AutoGPTPrompt(BaseChatPromptTemplate, BaseModel):
 
     def _calculate_tokens(self, msgs: List[BaseMessage]) -> int:
         """Calculate the number of tokens used in the messages."""
-        return sum([self.token_counter(msg.content) for msg in msgs])
+        return sum(self.token_counter(msg.content) for msg in msgs)
 
     def _format_misc_messages(self, **kwargs: Any) -> List[BaseMessage]:
         """Format misc requried messages, such as time and date."""
@@ -86,10 +86,10 @@ class AutoGPTPrompt(BaseChatPromptTemplate, BaseModel):
         relevant_docs = memory.get_relevant_documents(str(previous_messages[-10:]))
         relevant_memory = [d.page_content for d in relevant_docs]
         relevant_memory_tokens = sum(
-            [self.token_counter(doc) for doc in relevant_memory]
+            self.token_counter(doc) for doc in relevant_memory
         ) + self.token_counter(content_format)
 
-        while len(relevant_memory) > 0:
+        while relevant_memory:
             if relevant_memory_tokens < token_limit:
                 break
             relevant_memory_tokens -= self.token_counter(relevant_memory[-1])
